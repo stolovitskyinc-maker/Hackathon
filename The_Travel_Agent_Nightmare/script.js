@@ -42,34 +42,63 @@ async function init() {
 
 async function fetchGlobalCities() {
     try {
-        const url = 'https://restcountries.com';
+        // 1. The official v5 endpoint address
+        const url = 'https://api.restcountries.com/countries/v5';
+        
+        // 2. Transmit your security token via the Network Authorization Header
         const response = await fetch(url, {
-            headers: { 'Authorization': `Bearer ${API_KEYS.REST_COUNTRIES_KEY}` }
+            headers: { 
+                'Authorization': `Bearer ${API_KEYS.REST_COUNTRIES_KEY}`,
+                'Accept': 'application/json'
+            }
         });
 
-        if (!response.ok) throw new Error(`Server returned status code: ${response.status}`);
+        if (!response.ok) {
+            throw new Error(`Server returned status code: ${response.status}`);
+        }
 
         const jsonPayload = await response.json();
+        
+        // 3. v5 wraps records securely inside a 'data' object array property
         const records = jsonPayload.data || [];
 
+        // 4. Safely parse the object records into your game's data scheme
         CITY_DATABASE = records
             .filter(country => country.capitals && country.capitals.length > 0)
             .map(country => {
+                // Safely read capital arrays or nested properties
+                const cityName = Array.isArray(country.capitals) ? country.capitals[0] : country.capitals;
+                
+                // Read nested geography coordinate elements
+                let latitude = 0;
+                let longitude = 0;
+                if (country.geography && country.geography.latlng) {
+                    latitude = country.geography.latlng[0] || 0;
+                    longitude = country.geography.latlng[1] || 0;
+                }
+
                 return {
-                    name: country.capitals, 
-                    country: country.names?.common || "Unknown",
-                    lat: country.geography?.latlng ? country.geography.latlng : 0,
-                    lng: country.geography?.latlng ? country.geography.latlng : 0
+                    name: cityName, 
+                    country: country.names?.common || country.name || "Unknown",
+                    lat: latitude,
+                    lng: longitude,
+                    // Use their alpha currency code field or default to USD
+                    currency: country.currencies && country.currencies.length > 0 ? country.currencies[0] : "USD"
                 };
             })
+            // Filter out any broken name inputs from the pool
+            .filter(city => city.name && city.name !== "Unknown")
             .sort((a, b) => a.name.localeCompare(b.name));
 
+        console.log("🎯 REST Countries API successfully loaded! Total Cities:", CITY_DATABASE.length);
+        
+        // Re-render the sidebar with the real live API data
         renderCityPool(CITY_DATABASE);
 
     } catch (error) {
         console.warn("API Server Blocked Connection. Booting up bulletproof local database fallback...", error);
         
-        // Bulletproof backup database
+        // Keeps your presentation safe if your account key limits run out
         CITY_DATABASE = [
             { name: "Amsterdam", country: "Netherlands", lat: 52.36, lng: 4.9, currency: "EUR" },
             { name: "Berlin", country: "Germany", lat: 52.52, lng: 13.4, currency: "EUR" },
@@ -88,6 +117,7 @@ async function fetchGlobalCities() {
         renderCityPool(CITY_DATABASE);
     }
 }
+
 
 // ==========================================
 // 3. UI RENDERING & USER INTERACTION
