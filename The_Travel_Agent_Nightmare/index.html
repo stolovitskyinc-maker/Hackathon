@@ -3,9 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Travel Agent Nightmare</title>
+    <title>The Ultimate Itinerary</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    
+    <header>
+        <h1>🗺️ The Ultimate Itinerary</h1>
+        <p>The Travel Agent Nightmare</p>
+    </header>
+
+    <main class="game-container">
+        <!-- Left: Destination Picker -->
+        <section class="sidebar">
+            <h2>Add Destinations</h2>
+            <input type="text" id="city-search" placeholder="Type a city name...">
+            <div id="city-list" class="city-pool">
+                <!-- Javascript will inject cities here -->
+            </div>
+        </section>
+
+        <!-- Right: Current Itinerary & Rules -->
+        <section class="playground">
+            <div class="timeline-box">
+                <h2>Your Current Itinerary</h2>
+                <div id="itinerary-timeline" class="timeline">
+                    <p class="empty-msg">Your timeline is empty. Add a city from the sidebar!</p>
+                </div>
+            </div>
+
+            <div class="rules-box">
+                <h2>Active Trip Rules</h2>
+                <div id="rules-list">
+                    <!-- Rule 1 always starts visible -->
+                    <div class="rule-card active" id="rule-1">
+                        <h3>Rule 1: The Connection Chain</h3>
+                        <p>The last letter of each destination city must match the first letter of the next city.</p>
+                        <span class="status-badge checking">Checking...</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
 </body>
 </html>

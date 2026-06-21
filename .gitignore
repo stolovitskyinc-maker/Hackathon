@@ -19,7 +19,3 @@ yarn-debug.log*
 yarn-error.log*
 .eslintcache
 
-# Future-proofing (if you add Node modules later)
-node_modules/
-.env
-dist/
