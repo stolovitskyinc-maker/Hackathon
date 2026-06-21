@@ -20,9 +20,7 @@ You only need a modern web browser installed.
 
 ### Step-by-Step Setup
 1.  **Clone the Repository:**
-    ```bash
-    git clone https://github.com
-    cd travel-agent-nightmare
+    git clone git@github.com:stolovitskyinc-maker/Hackathon.git
     ```
 2.  **Open the Project:**
     *   Simply double-click the `index.html` file in your file explorer to open it in your browser.
