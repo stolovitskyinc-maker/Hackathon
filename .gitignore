@@ -19,3 +19,5 @@ yarn-debug.log*
 yarn-error.log*
 .eslintcache
 
+# Hide secret credentials files
+config.js
