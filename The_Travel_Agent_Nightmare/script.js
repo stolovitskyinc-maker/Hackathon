@@ -42,10 +42,7 @@ async function init() {
 
 async function fetchGlobalCities() {
     try {
-        // 1. The official v5 endpoint address
         const url = 'https://api.restcountries.com/countries/v5';
-        
-        // 2. Transmit your security token via the Network Authorization Header
         const response = await fetch(url, {
             headers: { 
                 'Authorization': `Bearer ${API_KEYS.REST_COUNTRIES_KEY}`,
@@ -53,52 +50,111 @@ async function fetchGlobalCities() {
             }
         });
 
-        if (!response.ok) {
-            throw new Error(`Server returned status code: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`Server returned status code: ${response.status}`);
 
         const jsonPayload = await response.json();
         
-        // 3. v5 wraps records securely inside a 'data' object array property
-        const records = jsonPayload.data || [];
+        // Extract the records array using the standard v5 data.objects wrapper path
+        let records = [];
+        if (jsonPayload && jsonPayload.data && jsonPayload.data.objects) {
+            records = jsonPayload.data.objects;
+        } else if (Array.isArray(jsonPayload)) {
+            records = jsonPayload;
+        } else if (jsonPayload && jsonPayload.data) {
+            records = Array.isArray(jsonPayload.data) ? jsonPayload.data : [];
+        }
 
-        // 4. Safely parse the object records into your game's data scheme
+        // Map objects securely into your strict game format
         CITY_DATABASE = records
-            .filter(country => country.capitals && country.capitals.length > 0)
+            .filter(country => {
+                // Ensure a valid capital field property exists
+                const cap = country.capitals || country.capital || country.fields?.capitals;
+                return cap !== null && cap !== undefined;
+            })
             .map(country => {
-                // Safely read capital arrays or nested properties
-                const cityName = Array.isArray(country.capitals) ? country.capitals[0] : country.capitals;
+                // 1. SAFELY EXTRACT CITY NAME STRING (Prevents [object Object])
+                let cityName = "Unknown";
+                let rawCapital = country.capitals || country.capital || country.fields?.capitals;
                 
-                // Read nested geography coordinate elements
+                if (rawCapital) {
+                    if (Array.isArray(rawCapital) && rawCapital.length > 0) {
+                        // Handle array strings or nested array objects
+                        let target = rawCapital[0];
+                        cityName = (target && typeof target === 'object') ? (target.name || target.common || Object.values(target)[0]) : target;
+                    } else if (typeof rawCapital === 'object') {
+                        // Handle single nested object structure
+                        cityName = rawCapital.name || rawCapital.common || Object.values(rawCapital)[0];
+                    } else {
+                        cityName = rawCapital; // Flat string matching fallback
+                    }
+                }
+
+                // 2. SAFELY EXTRACT COUNTRY NAME STRING (Prevents [object Object])
+                let countryName = "Unknown";
+                let rawCountry = country["names.common"] || country.names || country.country || country.name;
+                
+                if (rawCountry) {
+                    if (typeof rawCountry === 'object') {
+                        countryName = rawCountry.common || rawCountry.official || Object.values(rawCountry)[0];
+                    } else {
+                        countryName = rawCountry;
+                    }
+                }
+
+                // Extract geographic coordinates cleanly from the v5 latlng elements
                 let latitude = 0;
                 let longitude = 0;
-                if (country.geography && country.geography.latlng) {
-                    latitude = country.geography.latlng[0] || 0;
-                    longitude = country.geography.latlng[1] || 0;
+                const latlngVal = country["geography.latlng"] || country.latlng || country.coordinates;
+                
+                if (latlngVal) {
+                    if (Array.isArray(latlngVal) && latlngVal.length >= 2) {
+                        latitude = latlngVal[0];
+                        longitude = latlngVal[1];
+                    } else if (typeof latlngVal === "string") {
+                        const splitCoords = latlngVal.split(",");
+                        latitude = parseFloat(splitCoords[0]) || 0;
+                        longitude = parseFloat(splitCoords[1]) || 0;
+                    }
+                }
+
+                // 3. SAFELY EXTRACT CURRENCY ALPHABETICAL CODE
+                let currencyCode = "USD";
+                const currKey = country["currencies.code"] || country.currencies || country.currency;
+                
+                if (currKey) {
+                    if (typeof currKey === 'object') {
+                        // Dig into nested currency schemas (e.g. { USD: { code: 'USD' } })
+                        const currencyKeys = Object.keys(currKey);
+                        if (currencyKeys.length > 0) {
+                            const firstCurrency = currKey[currencyKeys[0]];
+                            currencyCode = (firstCurrency && typeof firstCurrency === 'object') ? (firstCurrency.code || currencyKeys[0]) : currencyKeys[0];
+                        }
+                    } else {
+                        currencyCode = currKey;
+                    }
                 }
 
                 return {
-                    name: cityName, 
-                    country: country.names?.common || country.name || "Unknown",
+                    name: String(cityName).trim(), 
+                    country: String(countryName).trim(),
                     lat: latitude,
                     lng: longitude,
-                    // Use their alpha currency code field or default to USD
-                    currency: country.currencies && country.currencies.length > 0 ? country.currencies[0] : "USD"
+                    currency: String(currencyCode).toUpperCase()
                 };
             })
-            // Filter out any broken name inputs from the pool
-            .filter(city => city.name && city.name !== "Unknown")
+            // Strict text inspection to filter out any leaked objects or empty rows
+            .filter(city => city.name && city.name !== "Unknown" && !city.name.includes("[object"))
             .sort((a, b) => a.name.localeCompare(b.name));
 
         console.log("🎯 REST Countries API successfully loaded! Total Cities:", CITY_DATABASE.length);
         
-        // Re-render the sidebar with the real live API data
+        // Populate the sidebar pool interface elements
         renderCityPool(CITY_DATABASE);
 
     } catch (error) {
         console.warn("API Server Blocked Connection. Booting up bulletproof local database fallback...", error);
         
-        // Keeps your presentation safe if your account key limits run out
+        // Fallback array database backup
         CITY_DATABASE = [
             { name: "Amsterdam", country: "Netherlands", lat: 52.36, lng: 4.9, currency: "EUR" },
             { name: "Berlin", country: "Germany", lat: 52.52, lng: 13.4, currency: "EUR" },
@@ -117,7 +173,6 @@ async function fetchGlobalCities() {
         renderCityPool(CITY_DATABASE);
     }
 }
-
 
 // ==========================================
 // 3. UI RENDERING & USER INTERACTION

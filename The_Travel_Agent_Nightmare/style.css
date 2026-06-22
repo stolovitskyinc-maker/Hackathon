@@ -1,0 +1,165 @@
+:root {
+    --bg-dark: #121214;
+    --card-bg: #1a1a1e;
+    --text-light: #e1e1e6;
+    --accent-red: #f75a68;
+    --accent-green: #00b37e;
+}
+
+body {
+    margin: 0;
+    font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif; /* 🚀 Swaps your font to the new design */
+    background-color: var(--bg-dark);
+    color: var(--text-light);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+header {
+    text-align: center;
+    padding: 1rem;
+    border-bottom: 1px solid #29292e;
+}
+
+header h1 { margin: 0; color: var(--accent-red); }
+header p { margin: 5px 0 0 0; opacity: 0.7; }
+
+.game-container {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    flex: 1;
+    overflow: hidden;
+}
+
+.sidebar {
+    background-color: var(--card-bg);
+    border-right: 1px solid #29292e;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    height: 100vh;      /* 📏 Forces the sidebar to stay fixed to the screen height */
+    box-sizing: border-box;
+}
+
+#city-search {
+    padding: 10px;
+    background: #202024;
+    border: 1px solid #29292e;
+    color: white;
+    border-radius: 4px;
+}
+
+.city-pool {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;            /* ⚡ Tells the city container to fill up all remaining sidebar space */
+    overflow-y: auto;   /* 📜 Crucial! Turns on a scrollbar when content goes too long */
+    padding-right: 5px; /* Adds a clean visual spacing cushion for your scrollbar track */
+}
+
+.city-btn {
+    background: #29292e;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: left;
+}
+
+.city-btn:hover { background: #323238; }
+
+.playground {
+    padding: 2rem;
+    padding-bottom: 6rem; /* 🚀 Adds a clean, invisible spacing cushion at the absolute bottom */
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    overflow-y: auto;
+    box-sizing: border-box; /* Ensures the padding is calculated inside the full height */
+}
+
+.timeline {
+    background: var(--card-bg);
+    border: 2px dashed #29292e;
+    padding: 1.5rem;
+    min-height: 80px;
+    border-radius: 6px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    overflow-x: auto;
+}
+
+.timeline-item {
+    background: #29292e;
+    padding: 10px 15px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.remove-btn {
+    background: none;
+    border: none;
+    color: var(--accent-red);
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.rule-card {
+    background: var(--card-bg);
+    border-left: 5px solid #4d4d56;
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+}
+
+.rule-card.active { border-left-color: #e1e1e6; }
+.rule-card.valid { border-left-color: var(--accent-green); }
+.rule-card.invalid { border-left-color: var(--accent-red); }
+
+.status-badge {
+    font-size: 0.8rem;
+    padding: 3px 8px;
+    border-radius: 3px;
+    background: #29292e;
+}
+
+/* ==========================================
+   GLOBAL CUSTOM DARK SCROLLBAR DESIGN
+   ========================================== */
+
+/* Target ALL scrollbar containers globally on the page */
+::-webkit-scrollbar {
+    width: 6px;  /* Vertical scrollbar width */
+    height: 6px; /* Horizontal scrollbar height (for your itinerary timeline) */
+}
+
+/* Style the background track line */
+::-webkit-scrollbar-track {
+    background: #121214; /* Matches your --bg-dark theme background */
+    border-radius: 4px;
+}
+
+/* Style the draggable handle/thumb */
+::-webkit-scrollbar-thumb {
+    background: #29292e; /* Matches your structural container border colors */
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+/* Brighten the thumb handle slightly when hovered */
+::-webkit-scrollbar-thumb:hover {
+    background: #323238; 
+}
+
+/* Modern Firefox layout support fallback configuration for the main areas */
+body, .city-pool, .playground, .timeline {
+    scrollbar-width: thin;
+    scrollbar-color: #29292e #121214;
+}
