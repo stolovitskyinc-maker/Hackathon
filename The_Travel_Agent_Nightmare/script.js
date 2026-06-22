@@ -104,7 +104,8 @@ async function fetchGlobalCities() {
                 // Extract geographic coordinates cleanly from the v5 latlng elements
                 let latitude = 0;
                 let longitude = 0;
-                const latlngVal = country["geography.latlng"] || country.latlng || country.coordinates;
+                const geo = country.geography || country;
+                const latlngVal = geo["latlng"] || geo.latlng || geo.coordinates;
                 
                 if (latlngVal) {
                     if (Array.isArray(latlngVal) && latlngVal.length >= 2) {
@@ -223,8 +224,19 @@ function updateTimelineUI() {
     userItinerary.forEach((city, index) => {
         const item = document.createElement("div");
         item.className = "timeline-item";
+       
+        let cleanName = "unknown";
+        if (city.name) {
+            cleanname = Array.isArray(city.name) ? city.name[0] : city.name;
+            if (typeof cleanname === 'object') cleanName = cleanName.name || Object.values(cleanName)[0];
+        }    
+        
+        const weatherBadge = city.displayedTemp !== undefined
+            ? `<span style="background: #202024; padding: 2px 6px; border-radius: 10px; font-size: 0.8rem; border: 1px solid #29292e; color: #00b37e;">🌡️ ${city.displayedTemp}°C</span>`
+            : `<span style="opacity: 0.5; font-size: 0.8rem;">🌡️ --°C</span>`;
+
         item.innerHTML = `
-            <span><strong>${index + 1}.</strong> ${city.name}</span>
+            <span><strong>${index + 1}.</strong> ${city.name} ${weatherBadge}</span>
             <button class="remove-btn">×</button>
         `;
         item.querySelector(".remove-btn").addEventListener("click", () => {
@@ -301,17 +313,23 @@ async function validateWeatherRule(badge) {
         for (let i = 0; i < userItinerary.length; i++) {
             let city = userItinerary[i];
             
-            // FIXED: Clean URL pathing string with correct variable token structures
             const url = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lng}&current=temperature_2m,wind_speed_10m&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m`;
             
             const response = await fetch(url);
             await response.json(); 
             
+            // const realTemp = (data.current || {}).temperature_2m || "N/A";
+
+            // city.displatemp = realTemp
+
             const temp = fakeTempArray[i] || 20;
             temperatures.push(temp);
             console.log(`Debug Temperature mapping for ${city.name}: ${temp}°C`);
         }
 
+        updateTimelineUI();
+
+        
         let isWeatherAlternating = true;
         for (let i = 0; i < temperatures.length - 1; i++) {
             const currentTemp = temperatures[i];
